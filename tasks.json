@@ -1,0 +1,29 @@
+{
+  "phase1": [
+    "Create/verify accounts (Printify/Etsy/etc.)",
+    "Publish initial SKUs & listings",
+    "Baseline ads & traffic sources",
+    "Set up basic analytics & email"
+  ],
+  "phase2": [
+    "Automate email follow-ups",
+    "Inventory sync & auto-pricing",
+    "Scale paid traffic & creatives",
+    "Launch additional geos/marketplaces"
+  ],
+  "phase3": [
+    "Full AI automation (VA flows)",
+    "Global rollout of all 30 streams",
+    "Add new SKUs at cadence",
+    "Hire/coordinate remote VA team"
+  ],
+  "today": {
+    "scheduled": [
+      "List 5 new products",
+      "Review ad metrics",
+      "Reply to buyer messages"
+    ],
+    "done": [],
+    "issues": []
+  }
+}

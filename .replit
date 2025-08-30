@@ -1,15 +1,12 @@
-entrypoint = "main.py"
+run = "python3 DailyReport/app.py"
 modules = ["python-3.11"]
 
+[[ports]]
+localPort = 8000
+externalPort = 80
+
 [nix]
-channel = "stable-25_05"
+packages = ["freetype", "gitFull", "glibcLocales", "google-cloud-sdk", "mailutils", "nano", "playwright-driver"]
 
-[unitTest]
-language = "python3"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
-[deployment]
-run = ["python3", "main.py"]
-deploymentTarget = "cloudrun"
+[agent]
+expertMode = true

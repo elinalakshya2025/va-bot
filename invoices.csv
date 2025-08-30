@@ -1,0 +1,5 @@
+invoice_no,client_name,item_desc,qty,unit_price
+INV-1001,Elina Pvt Ltd,Design Service,2,500
+INV-1001,Elina Pvt Ltd,Printing Service,1,750
+INV-1002,Lakshya Corp,Consulting,3,1200
+INV-1002,Lakshya Corp,Support,2,800

@@ -1,0 +1,18 @@
+[
+  {
+    "platform": "Gmail (Elina)",
+    "email_env": "ELINA_EMAIL"
+  },
+  {
+    "platform": "PayPal",
+    "email_env": "PAYPAL_EMAIL"
+  },
+  {
+    "platform": "Etsy",
+    "email_env": "ETSY_EMAIL"
+  },
+  {
+    "platform": "Printify",
+    "email_env": "PRINTIFY_EMAIL"
+  }
+]
