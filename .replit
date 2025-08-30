@@ -6,7 +6,7 @@ localPort = 8000
 externalPort = 80
 
 [nix]
-packages = ["freetype", "gitFull", "glibcLocales", "google-cloud-sdk", "mailutils", "nano", "playwright-driver"]
+packages = ["freetype", "gitFull", "glibcLocales", "google-cloud-sdk", "mailutils", "nano", "playwright-driver", "zulu"]
 
 [agent]
 expertMode = true

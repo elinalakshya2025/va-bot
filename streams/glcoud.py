@@ -1,76 +1,37 @@
-import subprocess, os, glob, sys
+import os
+import json
+from google.oauth2 import service_account
+import google.auth
+
+# Load JSON from environment variable
+service_account_info = json.loads(
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+credentials = service_account.Credentials.from_service_account_info(
+    service_account_info)
 
 
-def run(cmd):
-    print("➤", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+def setup_gcloud():
+    # Load JSON from env
+    creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    if not creds_json:
+        raise ValueError(
+            "❌ Missing GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
+
+    creds_dict = json.loads(creds_json)
+
+    # Build credentials object
+    credentials = service_account.Credentials.from_service_account_info(
+        creds_dict)
+
+    # Set GOOGLE_APPLICATION_CREDENTIALS to a temp file (for SDKs needing file)
+    temp_path = "/tmp/gcloud-key.json"
+    with open(temp_path, "w") as f:
+        f.write(creds_json)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
+
+    print("✅ Google Cloud credentials loaded into environment")
 
 
-# --- STEP 1: AUTHENTICATE WITH SERVICE ACCOUNT JSON ---
-json_files = glob.glob("*.json")
-if not json_files:
-    print("❌ No service account JSON found in workspace! Upload it first.")
-    sys.exit(1)
-
-key_file = json_files[0]
-print(f"🔑 Using service account key: {key_file}")
-
-# Activate service account
-run(["gcloud", "auth", "activate-service-account", "--key-file", key_file])
-
-# Show active account
-run(["gcloud", "auth", "list"])
-
-# --- STEP 2: GET USER INPUT ---
-PROJECT_ID = input("Enter GCP PROJECT_ID: ").strip()
-EMAIL = input("Sender Gmail (EMAIL): ").strip()
-APP_PASS = input("Gmail App Password (APP_PASS): ").strip()
-PAYPAL_EMAIL = input("PayPal Email (PAYPAL_EMAIL): ").strip()
-
-REGION = "asia-south1"
-IMAGE = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/va-bot/va-bot:latest"
-
-# --- STEP 3: CONFIGURE PROJECT ---
-run(["gcloud", "config", "set", "project", PROJECT_ID])
-run(["gcloud", "config", "set", "run/region", REGION])
-
-# --- STEP 4: ENABLE REQUIRED SERVICES ---
-run([
-    "gcloud", "services", "enable", "run.googleapis.com",
-    "cloudbuild.googleapis.com", "artifactregistry.googleapis.com",
-    "cloudscheduler.googleapis.com", "secretmanager.googleapis.com"
-])
-
-
-# --- STEP 5: CREATE / UPDATE SECRETS ---
-def upsert_secret(name, value):
-    try:
-        run([
-            "bash", "-c",
-            f"echo -n '{value}' | gcloud secrets create {name} --data-file=-"
-        ])
-    except subprocess.CalledProcessError:
-        run([
-            "bash", "-c",
-            f"echo -n '{value}' | gcloud secrets versions add {name} --data-file=-"
-        ])
-
-
-upsert_secret("EMAIL", EMAIL)
-upsert_secret("APP_PASS", APP_PASS)
-upsert_secret("PAYPAL_EMAIL", PAYPAL_EMAIL)
-
-# --- STEP 6: CREATE ARTIFACT REPO ---
-try:
-    run([
-        "gcloud", "artifacts", "repositories", "create", "va-bot",
-        "--repository-format=docker", f"--location={REGION}",
-        "--description=Lakshya VA Bot images"
-    ])
-except subprocess.CalledProcessError:
-    print("ℹ️ Repo already exists, skipping.")
-
-# --- STEP 7: BUILD & PUSH IMAGE ---
-run(["gcloud", "builds", "submit", "--tag", IMAGE])
-
-print("🎯 Done Boss! VA Bot is built and pushed to Artifact Registry.")
+if __name__ == "__main__":
+    setup_gcloud()
+    print("VA Bot ready with Google Cloud creds (via Render env vars)")
