@@ -1,37 +1,31 @@
 import os
-import json
-from google.oauth2 import service_account
-import google.auth
-
-# Load JSON from environment variable
-service_account_info = json.loads(
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
-credentials = service_account.Credentials.from_service_account_info(
-    service_account_info)
+import subprocess
 
 
-def setup_gcloud():
-    # Load JSON from env
-    creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-    if not creds_json:
-        raise ValueError(
-            "❌ Missing GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
-
-    creds_dict = json.loads(creds_json)
-
-    # Build credentials object
-    credentials = service_account.Credentials.from_service_account_info(
-        creds_dict)
-
-    # Set GOOGLE_APPLICATION_CREDENTIALS to a temp file (for SDKs needing file)
-    temp_path = "/tmp/gcloud-key.json"
-    with open(temp_path, "w") as f:
-        f.write(creds_json)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
-
-    print("✅ Google Cloud credentials loaded into environment")
+def run(cmd):
+    print("➤ " + " ".join(cmd))
+    subprocess.run(cmd, check=True)
 
 
-if __name__ == "__main__":
-    setup_gcloud()
-    print("VA Bot ready with Google Cloud creds (via Render env vars)")
+# Read from environment variables
+PROJECT_ID = os.getenv("PROJECT_ID", "lakshya-phase1")
+EMAIL = os.getenv("EMAIL")
+APP_PASS = os.getenv("APP_PASS")
+PAYPAL_EMAIL = os.getenv("PAYPAL_EMAIL")
+
+if not EMAIL or not APP_PASS or not PAYPAL_EMAIL:
+    raise ValueError(
+        "❌ Missing EMAIL, APP_PASS, or PAYPAL_EMAIL in environment variables!")
+
+# Configure gcloud project & region
+run(["gcloud", "config", "set", "project", PROJECT_ID])
+run(["gcloud", "config", "set", "run/region", "asia-south1"])
+
+# Enable necessary APIs
+run([
+    "gcloud", "services", "enable", "run.googleapis.com",
+    "cloudbuild.googleapis.com", "artifactregistry.googleapis.com",
+    "cloudscheduler.googleapis.com", "secretmanager.googleapis.com"
+])
+
+print("✅ Setup complete. Ready for deployment.")

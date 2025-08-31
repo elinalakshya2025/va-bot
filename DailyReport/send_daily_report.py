@@ -88,3 +88,18 @@ if __name__ == "__main__":
         import subprocess, sys; subprocess.check_call([sys.executable, "-m", "pip", "install", "reportlab", "pypdf"])
     main()
 PY
+
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return "✅ VA Bot is running 24/7 on Render!", 200
+
+@app.route("/health")
+def health():
+    return "OK", 200
+
+if __name__ == "__main__":
+app.run(host="0.0.0.0", port=10000)
