@@ -8,6 +8,9 @@ from flask import Flask
 app = Flask(__name__)
 
 
+# -----------------------------
+# Routes
+# -----------------------------
 @app.route("/")
 def index():
     return "✅ VA Bot is running 24/7 on Render!", 200
@@ -18,6 +21,9 @@ def health():
     return "OK", 200
 
 
+# -----------------------------
+# Email Sending
+# -----------------------------
 def send_email(subject, body):
     EMAIL = os.getenv("EMAIL")
     APP_PASS = os.getenv("APP_PASS")
@@ -52,11 +58,13 @@ def send_report():
 
 @app.route("/run-support")
 def run_support():
-    # later hook in Elina platform support logic here
     return send_email("📨 Support Task Triggered",
                       "Support logic executed successfully!")
 
 
+# -----------------------------
+# App Runner
+# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Starting Flask on port {port}")
