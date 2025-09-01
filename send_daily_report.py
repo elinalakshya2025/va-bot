@@ -1,7 +1,7 @@
 from flask import Flask
 
 # -----------------------------
-# Flask app for Render
+# Minimal Flask app for Render
 # -----------------------------
 app = Flask(__name__)
 
@@ -17,10 +17,11 @@ def health():
 
 
 # -----------------------------
-# App Runner (Render requires this to stay alive)
+# App Runner
 # -----------------------------
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 10000))  # Render provides PORT
+    port = int(os.environ.get("PORT",
+                              10000))  # Render provides PORT dynamically
     print(f"🚀 Starting Flask on port {port}")
     app.run(host="0.0.0.0", port=port)
