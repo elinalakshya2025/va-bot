@@ -33,6 +33,7 @@ def send_daily_report():
         print("❌ Missing EMAIL or APP_PASS in environment variables!")
         return "Email credentials missing", 500
 
+    # Build email
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "✅ VA Bot Daily Report"
     msg["From"] = EMAIL
@@ -62,7 +63,7 @@ def send_daily_report():
         print("✅ Daily report email sent successfully to Boss!")
     except Exception as e:
         print("❌ Error sending daily report:", e)
-        return str(e), 500
+        return f"Error sending email: {e}", 500
 
     return "Daily report sent", 200
 
@@ -76,6 +77,6 @@ def send_report_endpoint():
 # App Runner (Render requires this to stay alive)
 # -----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render sets PORT dynamically
+    port = int(os.environ.get("PORT", 5000))  # Render gives dynamic PORT
     print(f"🚀 Starting Flask on port {port}")
     app.run(host="0.0.0.0", port=port)
