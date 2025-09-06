@@ -129,7 +129,7 @@ def run_phase1_cycle():
                 "Platform":
                 "YouTube",
                 "Result":
-                str(get_channel_stats("UC_x5XG1OV2P6uZZ5FSM9Ttw"))
+                str(get_channel_stats("UCe2cqtUKLMCm9v9vmsAkKaA"))
             })
         except Exception as e:
             results.append({"Platform": "YouTube", "Result": f"Error: {e}"})
