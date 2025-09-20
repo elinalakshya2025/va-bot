@@ -10,45 +10,37 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import pytz
 
-# Import Phase 1 connectors
-from vabot.phase1_connectors import (
-    get_printify_shops,
-    list_models,
-    get_channel_stats,
-)
+# Import all connectors
+from vabot.phase1_connectors import CONNECTORS
 
 # -----------------------------
 # Flask app
 # -----------------------------
 app = Flask(__name__)
 
-
 @app.route("/")
 def index():
     return "✅ VA Bot is running 24/7 on Render!", 200
 
-
 @app.route("/health")
 def health():
     return "OK", 200
-
 
 @app.route("/send-report")
 def send_report():
     send_daily_report()
     return "Manual report sent ✅", 200
 
-
 # -----------------------------
 # Email Sending Logic
 # -----------------------------
 def send_daily_report():
-    EMAIL = os.getenv("EMAIL")
-    APP_PASS = os.getenv("APP_PASS")
+    EMAIL = os.getenv("VA_EMAIL")
+    APP_PASS = os.getenv("VA_PASSWORD")
     TO_EMAIL = "nrveeresh327@gmail.com"
 
     if not EMAIL or not APP_PASS:
-        print("❌ Missing EMAIL or APP_PASS in environment variables!")
+        print("❌ Missing VA_EMAIL or VA_PASSWORD in environment variables!")
         return
 
     now = datetime.now(pytz.timezone("Asia/Kolkata"))
@@ -85,14 +77,50 @@ def send_daily_report():
 
     try:
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465,
-                              context=context) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(EMAIL, APP_PASS)
             server.sendmail(EMAIL, TO_EMAIL, msg.as_string())
         print(f"✅ Daily report email sent successfully at {now_str}")
     except Exception as e:
         print("❌ Error sending daily report:", e)
 
+# -----------------------------
+# First Log Confirmation Email
+# -----------------------------
+def send_first_log_confirmation(timestamp):
+    EMAIL = os.getenv("VA_EMAIL")
+    APP_PASS = os.getenv("VA_PASSWORD")
+    TO_EMAIL = "nrveeresh327@gmail.com"
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "✅ VA Bot First Log Confirmation"
+    msg["From"] = EMAIL
+    msg["To"] = TO_EMAIL
+
+    text = f"Boss, VA Bot has completed its first log cycle at {timestamp}."
+    html = f"""
+    <html>
+      <body>
+        <h2>✅ VA Bot First Log Confirmation</h2>
+        <p>Boss, the first log cycle is complete at <b>{timestamp}</b>.</p>
+        <p>From now on, logs will continue every hour.</p>
+        <p>🚀 Mission 2040 on track.</p>
+        <p>- Dhruvayu</p>
+      </body>
+    </html>
+    """
+
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        ctx = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx) as server:
+            server.login(EMAIL, APP_PASS)
+            server.sendmail(EMAIL, TO_EMAIL, msg.as_string())
+        print(f"📧 First log confirmation email sent at {timestamp}")
+    except Exception as e:
+        print("❌ Error sending first log confirmation:", e)
 
 # -----------------------------
 # Real Workflow Runner (Phase 1)
@@ -101,6 +129,8 @@ def run_phase1_cycle():
     log_file = "logs/phase1_log.csv"
     os.makedirs("logs", exist_ok=True)
 
+    first_run = True  # ✅ Track first log cycle
+
     while True:
         now = datetime.now(pytz.timezone("Asia/Kolkata"))
         now_str = now.strftime("%d-%m-%Y %I:%M %p IST")
@@ -108,52 +138,64 @@ def run_phase1_cycle():
         print(f"🚀 Running Phase 1 API checks at {now_str}...")
 
         results = []
-        try:
-            results.append({
-                "Platform": "Printify",
-                "Result": str(get_printify_shops())
-            })
-        except Exception as e:
-            results.append({"Platform": "Printify", "Result": f"Error: {e}"})
-
-        try:
-            results.append({
-                "Platform": "MeshyAI",
-                "Result": str(list_models())
-            })
-        except Exception as e:
-            results.append({"Platform": "MeshyAI", "Result": f"Error: {e}"})
-
-        try:
-            results.append({
-                "Platform":
-                "YouTube",
-                "Result":
-                str(get_channel_stats("UCe2cqtUKLMCm9v9vmsAkKaA"))
-            })
-        except Exception as e:
-            results.append({"Platform": "YouTube", "Result": f"Error: {e}"})
+        for conn in CONNECTORS:
+            try:
+                raw = conn()
+                # Flatten results for cleaner logs
+                results.append({
+                    "Platform": raw.get("platform", conn.__name__),
+                    "Orders": raw.get("orders_yesterday") or raw.get("orders") or raw.get("projects_done") or "-",
+                    "Revenue": raw.get("revenue_yesterday") or raw.get("royalties_yesterday") or raw.get("earnings_yesterday") or raw.get("balance") or "-",
+                    "Followers": raw.get("followers") or "-",
+                    "Subscribers": raw.get("subscribers") if "subscribers" in raw else "-",
+                    "Status": raw.get("status") or raw.get("note") or "✅ OK",
+                    "Timestamp": now_str
+                })
+            except Exception as e:
+                results.append({
+                    "Platform": conn.__name__,
+                    "Orders": "-",
+                    "Revenue": "-",
+                    "Followers": "-",
+                    "Subscribers": "-",
+                    "Status": f"❌ Error: {e}",
+                    "Timestamp": now_str
+                })
 
         df = pd.DataFrame(results)
-        df["Timestamp"] = now_str
 
         if os.path.exists(log_file):
             df.to_csv(log_file, mode="a", header=False, index=False)
         else:
             df.to_csv(log_file, index=False)
 
+        # ✅ Send first log confirmation email only once
+        if first_run:
+            send_first_log_confirmation(now_str)
+            first_run = False
+
         print(f"✅ Logged results to {log_file}")
         print("⏳ Sleeping for 1 hour...")
         time.sleep(3600)  # 1 hour
-
 
 # -----------------------------
 # App Runner
 # -----------------------------
 if __name__ == "__main__":
-    # Start background workflow thread
-    threading.Thread(target=run_phase1_cycle, daemon=True).start()
+    import sys
 
-    port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 Starting Flask on port {port}")
-    app.run(host="0.0.0.0", port=port)
+    if len(sys.argv) > 1 and sys.argv[1] == "flask":
+        # Start background workflow thread
+        threading.Thread(target=run_phase1_cycle, daemon=True).start()
+
+        port = int(os.environ.get("PORT", 10000))
+        print(f"🚀 Starting Flask on port {port}")
+        app.run(host="0.0.0.0", port=port)
+
+    else:
+        print("🚀 Sending daily report without starting Flask...")
+        try:
+            send_report()
+            print("✅ Daily report sent successfully.")
+        except Exception as e:
+            print(f"❌ Error while sending report: {e}")

@@ -14,3 +14,16 @@ reportlab==4.2.2
 playwright==1.48.0
 PyYAML==6.0.2
 rich==13.9.2
+
+
+flask
+openai
+requests
+chromadb
+sentence_transformers
+python-dotenv
+pandas
+pymupdf
+sqlalchemy
+uvicorn
+fastapi
